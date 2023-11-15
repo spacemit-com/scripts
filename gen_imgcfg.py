@@ -16,9 +16,9 @@ image sdcard.img {
     for partition in partitions:
         name = partition.get("name", "")
         src_size = partition.get("size", "")
-        hidden = partition.get("hidden", "false")
+        hidden = partition.get("hidden", False)
         visible = "true"
-        if hidden == "true":
+        if hidden == True:
             visible = "false"
         if src_size == "-":
             src_size = ""
