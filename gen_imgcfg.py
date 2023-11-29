@@ -24,6 +24,7 @@ image sdcard.img {
             src_size = ""
         offset = partition.get("offset", "")
         image = partition.get("image", "")
+        holes = partition.get("holes", "{}")
 
 
         cfg_content += f'''
@@ -31,6 +32,7 @@ image sdcard.img {
             image = "{image}"
             offset = "{offset}"
             size = "{src_size}"
+            holes = {holes}
             in-partition-table = "{visible}"
     }}
         '''
