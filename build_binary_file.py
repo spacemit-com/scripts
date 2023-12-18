@@ -18,7 +18,7 @@ import ctypes as ct
 import common_decorator
 
 
-class FSBLImage(object):
+class ImageBinary(object):
     """First Stage Boot Loader
     """
     def __init__(self, log):
@@ -276,7 +276,7 @@ class FSBLImage(object):
     def __extract_public_key(self, key_info_str, key_lable):
         """Extract public key data from public key info.
         """
-        # hex string format: (:HH){n}
+        # hex string format: label(:HH){n}
         hex_convert = lambda x : b''.join([binascii.unhexlify(i.strip())
             for i in x[1:].split(":")])
 
@@ -342,17 +342,17 @@ class FSBLImage(object):
 
         return binary_data
 
-    def __create_key_file(self, key_name):
-        """Save public/private key files in the key folder.
+    def __generate_key_filename(self, key_name):
+        """Generate public/private key file name with the key folder.
         """
         key_folder = os.path.join(self.input_path, 'key')
         if not os.path.isdir(key_folder):
             os.mkdir(key_folder)
 
         key_filename = os.path.join(key_folder, f"{key_name}.key")
-        key_file = open(key_filename, 'w+b')
-        self.key_file_list.append(key_file)
-        return key_file
+        # key_file = open(key_filename, 'w+b')
+        # self.key_file_list.append(key_file)
+        return key_filename
 
     def __build_structure_data(self, structure_list):
         """Build binary data according to structure definition, string pattern:
@@ -410,22 +410,42 @@ class FSBLImage(object):
             self.LOG.error(f"Illegal algorithm {al_info_tuple} while get key config")
             return name, b''
 
-        method, cmd_dict, pubkey_str = self.encrypt_method_dict[al_info_tuple[0]]
+        key_source = key_info_dict.get("source", '')
+        key_file_name = os.path.join(self.input_path, key_source)
+        self.LOG.debug(key_file_name)
+
+        prvkey_filename, pubkey_filename = '', ''
         # private key, public key, public key info
-        prvkey_file = self.__create_key_file(f"{name}_prv")
-        pubkey_file = self.__create_key_file(f"{name}_pub")
-        pubkey_info_file = tempfile.NamedTemporaryFile(delete = False)
-        self.temp_file_list.extend(pubkey_info_file)
+        if key_source and os.path.isfile(key_file_name):
+            with open(key_file_name, 'r', encoding = 'utf-8') as f:
+                first_line_str = f.readline()
 
-        self.build_info_dict[name + '_key'] = (prvkey_file.name, pubkey_file.name)
-        # generate prvate key
-        method(cmd_dict["private"], (prvkey_file.name, al_info_tuple[1]))
-        # generate public key from prvate key
-        method(cmd_dict["public"], (prvkey_file.name, pubkey_file.name))
+            if 'PRIVATE KEY' in first_line_str:
+                prvkey_filename = key_file_name
+            elif 'PUBLIC KEY' in first_line_str:
+                pubkey_filename = key_file_name  
+            else:
+                self.LOG.error(f"NO valid private or public key in file {key_file_name}!")
+                return name, b''
+
+        method, cmd_dict, pubkey_str = self.encrypt_method_dict[al_info_tuple[0]]
+        if not pubkey_filename:
+            if not prvkey_filename:
+                prvkey_filename = self.__generate_key_filename(f"{name}_prv")
+                # generate prvate key if NO private key assign
+                method(cmd_dict["private"], (prvkey_filename, al_info_tuple[1]))
+
+            # generate public key from prvate key
+            pubkey_filename = self.__generate_key_filename(f"{name}_pub")
+            method(cmd_dict["public"], (prvkey_filename, pubkey_filename))
+
         # generate public key info from public key
-        method(cmd_dict["pubparse"], (pubkey_file.name, pubkey_info_file.name))
+        pubkey_info_file = tempfile.NamedTemporaryFile(delete = False)
+        self.temp_file_list.append(pubkey_info_file)
+        method(cmd_dict["pubparse"], (pubkey_filename, pubkey_info_file.name))
 
-        pubkey_file.seek(0)
+        self.build_info_dict[name + '_key'] = (prvkey_filename, pubkey_filename)
+        pubkey_info_file.seek(0)
         binary_data = self.__extract_public_key(pubkey_info_file.read().decode('utf-8'), pubkey_str)
         binary_data = self._align_binary_data(binary_data, align)
         self.build_info_dict[name] = (binary_data, )
@@ -502,17 +522,17 @@ class FSBLImage(object):
         self.build_info_dict[name] = (binary_data, )
         return name, binary_data
 
-    def extract_config(self, yml_file):
+    def extract_config(self, yaml_file):
         """Extract configuration from XML file.
         """
-        if not os.path.isfile(yml_file):
-            self.LOG.error("Config file %s NOT exist" %yml_file)
+        if not os.path.isfile(yaml_file):
+            self.LOG.error("Config file %s NOT exist" %yaml_file)
             return False
 
-        with open(yml_file, 'r', encoding = 'utf-8') as f:
+        with open(yaml_file, 'r', encoding = 'utf-8') as f:
             config_info_dict = yaml.load(f, Loader = yaml.FullLoader)
         # self.LOG.debug(json.dumps(config_info_dict, indent = 2))
-        self.input_path = os.path.dirname(yml_file)
+        self.input_path = os.path.dirname(yaml_file)
         return config_info_dict
 
     def verify_config(self, config_dict):
@@ -588,19 +608,19 @@ def main(argv):
     parser = argparse.ArgumentParser(
         description='Parse yaml config file, collect related files, and build image file.',
     )
-    parser.add_argument('-c',   dest = 'yml_file',      required = True,    help = 'configuration yml file')
-    parser.add_argument('-o',   dest = 'output_file',   default = 'bl.img', help = 'output file')
+    parser.add_argument('-c',   dest = 'yaml_file',     required = True,    help = 'configuration yml file')
+    parser.add_argument('-o',   dest = 'output_file',   default = 'img.bin', help = 'output file')
 
     args = parser.parse_args()
-    yml_file = args.yml_file
+    yaml_file = args.yaml_file
     output_file = args.output_file
 
     log = common_decorator.Logger()
     # log = common_decorator.Logger('debug')
-    bootloader = FSBLImage(log)
-    config_info_dict = bootloader.extract_config(yml_file)
-    if config_info_dict and bootloader.verify_config(config_info_dict):
-        bootloader.build_iamge(config_info_dict, output_file)
+    image = ImageBinary(log)
+    config_info_dict = image.extract_config(yaml_file)
+    if config_info_dict and image.verify_config(config_info_dict):
+        image.build_iamge(config_info_dict, output_file)
 
 
 if __name__ == '__main__':
