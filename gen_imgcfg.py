@@ -63,5 +63,4 @@ if __name__ == "__main__":
 
     with open("genimage.cfg", "w") as cfg_file:
         cfg_file.write(genimage_cfg)
-
-    print("genimage.cfg generated successfully.")
+    #print("genimage.cfg generated successfully.")
