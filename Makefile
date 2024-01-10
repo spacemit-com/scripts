@@ -26,7 +26,7 @@ define choose_config
 		mkdir -p output/$$result; \
 		make -C ./buildroot O=../output/$$result BR2_EXTERNAL=../buildroot-ext  $$file_name; \
 		touch env.mk; \
-		echo "MAKEFILE=output/$$result/Makefile" >> env.mk; \
+		echo "MAKEFILE=output/$$result/Makefile" > env.mk; \
 		make -C output/$$result; \
 	else \
 		echo "Invalid choice: $$choice"; \
@@ -36,13 +36,11 @@ endef
 ifeq ($(MAKECMDGOALS),envconfig)
 .PHONY: envconfig
 envconfig:
-	rm -f env.mk
 	$(call choose_config)
 endif
 
 ifeq ($(wildcard env.mk),)
 all:
-	rm -f env.mk
 	$(call choose_config)
 
 .PHONY: help
