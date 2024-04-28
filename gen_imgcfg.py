@@ -54,7 +54,6 @@ if __name__ == "__main__":
 
     args = sys.argv[1:]
     for i in range(0, len(args), 2):
-        print(args[i], args[i+1])
         if args[i] == "-i":
             json_file = args[i+1]
         elif args[i] == "-n":
