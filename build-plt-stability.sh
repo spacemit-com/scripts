@@ -8,6 +8,7 @@ if [ -f $WESTON_INI ]
 then
     sed -i 's/gui-main/stability/' $WESTON_INI
     make
+    sed -i 's/stability/gui-main/' $WESTON_INI
 else
     echo 'Missing $WESTON_INI'
     exit -1
