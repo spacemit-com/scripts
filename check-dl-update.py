@@ -24,7 +24,16 @@ if os.path.exists(update):
 
 print('checking update...')
 files = []
+ignore_dirs = [
+    f'{dl_dir}/toolchain-external-custom',
+    f'{dl_dir}/onnx-runtime'
+]
+
 for root, dirs, filenames in os.walk(dl_dir):
+    if root in ignore_dirs:
+        print(f'ignore {root}')
+        continue
+
     for filename in filenames:
         if filename != '.lock':
             file = root + '/' + filename
