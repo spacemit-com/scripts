@@ -49,7 +49,7 @@ version=`cat ../target/etc/bianbu_version`
 SDCARD_IMAGE=bianbu-linux-k1_plt-sdcard-MUSE-Book-$version.zip
 rm -f $SDCARD_IMAGE
 zip -r $SDCARD_IMAGE bianbu-linux-k1_plt-sdcard.img
-IMAGE=bianbu-linux-k1_plt-$version.zip
+IMAGE=bianbu-linux-k1_plt-MUSE-Book-$version.zip
 rm -f $IMAGE
 cp -v bianbu-linux-k1_plt.zip $IMAGE
 popd > /dev/null
