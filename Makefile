@@ -91,8 +91,8 @@ define MAKE_BUILDROOT_WITH_TARGET
 endef
 
 define MAKE_IN_OUTPUT_DIR_WITH_TARGET
-	make $(MAKE_OPTS) O=/$(1) \
-			-C /$(1) \
+	make $(MAKE_OPTS) O=$(OUTPUT_DIR)/$(1) \
+			-C $(OUTPUT_DIR)/$(1) \
 			$(2)
 endef
 
@@ -269,7 +269,6 @@ build-docker-image: .check-docker
 
 
 $(PROJECT_DIR)/.passwd $(PROJECT_DIR)/.group:
-	@mkdir -p $(PROJECT_DIR)/tmp
 	@current_user="$(shell whoami):x:$(UID):$(GID):$(shell whoami),,,:/home/$(shell whoami):/bin/bash"; \
 	current_group="$(shell id -gn):x:$(GID):"; \
 	if [ ! -f $(PROJECT_DIR)/.passwd ] || \
