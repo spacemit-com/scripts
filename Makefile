@@ -107,7 +107,7 @@ else # DOCKER_BUILD
 	IMAGE_NAME     ?= bianbu-linux-builder:latest
 
 define RUN_DOCKER
-	$(DOCKER) run -t --init --rm \
+	$(DOCKER) run -t --init --rm --security-opt seccomp=unconfined \
 		-e HOME \
 		-v $(PROJECT_DIR):/build \
 		-v $(DL_DIR):/build/buildroot/dl \
@@ -129,7 +129,7 @@ endef
 
 # Parameterized version of MAKE_BUILDROOT macro
 define MAKE_BUILDROOT_WITH_TARGET
-	$(DOCKER) run -t --init --rm \
+	$(DOCKER) run -t --init --rm --security-opt seccomp=unconfined \
 		-e HOME \
 		-v $(PROJECT_DIR):/build \
 		-v $(DL_DIR):/build/buildroot/dl \
@@ -148,7 +148,7 @@ define MAKE_BUILDROOT_WITH_TARGET
 endef
 
 define MAKE_IN_OUTPUT_DIR_WITH_TARGET
-	$(DOCKER) run -t --init --rm \
+	$(DOCKER) run -t --init --rm --security-opt seccomp=unconfined \
 		-e HOME \
 		-v $(PROJECT_DIR):/build \
 		-v $(DL_DIR):/build/buildroot/dl \
@@ -210,7 +210,7 @@ all:
 		exit 1; \
 	fi
 	@echo "$(OK_COLOR)Passing target '$@' to $(output_dir)$(NO_COLOR)";
-	@$(call MAKE_IN_OUTPUT_DIR_WITH_TARGET,$(CONFIG_NAME),$(MAKEOVERRIDES));
+	@$(call MAKE_IN_OUTPUT_DIR_WITH_TARGET,$(CONFIG_NAME),$@ $(MAKEOVERRIDES));
 else
 all: vars
 endif
