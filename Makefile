@@ -1,4 +1,4 @@
-# Enhanced Makefile with Docker support for Bianbu Linux Development
+# Enhanced Makefile with Docker support for Buildroot Development
 
 PROJECT_DIR      := $(shell pwd)
 CONFIG_DIRECTORY := $(PROJECT_DIR)/buildroot-ext/configs
@@ -216,7 +216,7 @@ all: vars
 endif
 
 vars:
-	@echo "$(OK_COLOR)Bianbu Linux Build System$(NO_COLOR)"
+	@echo "$(OK_COLOR)Buildroot Build System$(NO_COLOR)"
 	@echo ""
 	@echo "$(WARN_COLOR)Project Information:$(NO_COLOR)"
 	@echo "  Project directory:  $(PROJECT_DIR)"
@@ -387,7 +387,7 @@ else # NEW TARGETS
 	@echo
 
 help:
-	@echo "$(OK_COLOR)Bianbu Linux Build System - Help$(NO_COLOR)"
+	@echo "$(OK_COLOR)Buildroot Build System - Help$(NO_COLOR)"
 	@echo ""
 	@echo "$(WARN_COLOR)Available solutions:$(NO_COLOR)"
 	@echo "  $(OK_COLOR)$(TARGETS)$(NO_COLOR)"
@@ -409,5 +409,6 @@ help:
 	@echo "  $(OK_COLOR)make build-docker-image$(NO_COLOR)            # Build Docker image"
 	@echo "  $(OK_COLOR)make update-docker-image$(NO_COLOR)           # Update Docker image"
 	@echo ""
-	@echo "$(OK_COLOR)Quick Start: Run 'make <solution>-build' to get started!$(NO_COLOR)"
+	@echo "$(OK_COLOR)Quick Start: Run 'make <solution>-build' to get started, e.g.:$(NO_COLOR)"
+	@echo "  make k1_v2-build"
 endif # NEW TARGETS
