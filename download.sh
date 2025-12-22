@@ -638,9 +638,9 @@ download_from_archive() {
     log_info "Downloading to directory: $dl_dir"
 
     if [[ $DEBUG_MODE == true ]]; then
-        wget -c -r -nv -np -nH -R "index.html*" -P "$dl_dir" http://archive.spacemit.com/buildroot/dl/
+        wget -c -r -nv -np -nH -e robots=off -R "index.html*" -P "$dl_dir" http://archive.spacemit.com/buildroot/dl/
     else
-        wget -c -r -nv -np -nH -R "index.html*" -P "$dl_dir" http://archive.spacemit.com/buildroot/dl/ >/dev/null 2>&1
+        wget -c -r -nv -np -nH -e robots=off -R "index.html*" -P "$dl_dir" http://archive.spacemit.com/buildroot/dl/ >/dev/null 2>&1
     fi
 
     if [[ $? -eq 0 ]]; then
