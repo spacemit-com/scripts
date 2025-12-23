@@ -1,4 +1,4 @@
-# Enhanced Makefile with Docker support for Bianbu Linux Development
+# Enhanced Makefile with Docker support for Buildroot Development
 
 PROJECT_DIR      := $(shell pwd)
 CONFIG_DIRECTORY := $(PROJECT_DIR)/buildroot-ext/configs
@@ -169,7 +169,7 @@ endif # DOCKER_BUILD
 
 # Interactive configuration selection function (config and build)
 define choose_config_and_build
-	@echo "$(OK_COLOR)Available configs in $(CONFIG_DIRECTORY):$(NO_COLOR)"
+	@printf "$(OK_COLOR)Available configs in $(CONFIG_DIRECTORY):$(NO_COLOR)\n"
 	@i=1; \
 	for file in $(CONFIGS); do \
 		file_name=$$(basename "$$file"); \
@@ -177,7 +177,7 @@ define choose_config_and_build
 		i=$$((i+1)); \
 	done
 
-	@echo ""
+	@printf "\n"
 	@read -p "Your choice (1-$(NUM_CONFIGS)): " choice; \
 	if [ "$$choice" -ge 1 -a "$$choice" -le $(NUM_CONFIGS) ]; then \
 		selected_file=$$(echo $(CONFIGS) | cut -d ' ' -f $$choice); \
@@ -187,73 +187,73 @@ define choose_config_and_build
 		mkdir -p output/$$result; \
 		$(call MAKE_BUILDROOT_WITH_TARGET,$$result,$$file_name); \
 		touch env.mk; \
-		echo "# Current active configuration - Do not modify this section manually" > env.mk; \
-		echo "CONFIG_NAME=$$result" >> env.mk; \
-		echo "MAKEFILE=output/$$result/Makefile" >> env.mk; \
-		echo "$(OK_COLOR)Configuration completed! Starting build...$(NO_COLOR)"; \
+		printf "# Current active configuration - Do not modify this section manually\n" > env.mk; \
+		printf "CONFIG_NAME=$$result\n" >> env.mk; \
+		printf "MAKEFILE=output/$$result/Makefile\n" >> env.mk; \
+		printf "$(OK_COLOR)Configuration completed! Starting build...$(NO_COLOR)\n"; \
 		$(call MAKE_BUILDROOT_WITH_TARGET,$$result,); \
 	else \
-		echo "Invalid choice: $$choice"; \
+		printf "Invalid choice: $$choice\n"; \
 	fi
 endef
 
 
 .PHONY: all envconfig vars status build-docker-image bianbu-docker-image update-docker-image publish-docker-image \
-        ccache-dir dl-dir
+		ccache-dir dl-dir
 
 # Default target - must be first in file
 ifneq ($(wildcard env.mk),)
 all:
 	@if [ ! -d "$(output_dir)" ]; then \
-		echo "$(ERROR_COLOR)Error: env.mk exists but output directory '$(output_dir)' does not exist.$(NO_COLOR)"; \
-		echo "$(WARN_COLOR)Please run 'make envconfig' to reconfigure the environment.$(NO_COLOR)"; \
+		printf "$(ERROR_COLOR)Error: env.mk exists but output directory '$(output_dir)' does not exist.$(NO_COLOR)\n"; \
+		printf "$(WARN_COLOR)Please run 'make envconfig' to reconfigure the environment.$(NO_COLOR)\n"; \
 		exit 1; \
 	fi
-	@echo "$(OK_COLOR)Passing target '$@' to $(output_dir)$(NO_COLOR)";
+	@printf "$(OK_COLOR)Passing target '$@' to $(output_dir)$(NO_COLOR)\n";
 	@$(call MAKE_IN_OUTPUT_DIR_WITH_TARGET,$(CONFIG_NAME),$@ $(MAKEOVERRIDES));
 else
 all: vars
 endif
 
 vars:
-	@echo "$(OK_COLOR)Bianbu Linux Build System$(NO_COLOR)"
-	@echo ""
-	@echo "$(WARN_COLOR)Project Information:$(NO_COLOR)"
-	@echo "  Project directory:  $(PROJECT_DIR)"
-	@echo "  Download directory: $(DL_DIR)"
-	@echo "  Output directory:   $(OUTPUT_DIR)"
-	@echo "  ccache directory:   $(CCACHE_DIR)"
+	@printf "$(OK_COLOR)Buildroot Build System$(NO_COLOR)\n"
+	@printf "\n"
+	@printf "$(WARN_COLOR)Project Information:$(NO_COLOR)\n"
+	@printf "  Project directory:  $(PROJECT_DIR)\n"
+	@printf "  Download directory: $(DL_DIR)\n"
+	@printf "  Output directory:   $(OUTPUT_DIR)\n"
+	@printf "  ccache directory:   $(CCACHE_DIR)\n"
 ifndef DIRECT_BUILD
-	@echo "  Docker repo/image:  $(DOCKER_REPO)/$(IMAGE_NAME)"
-	@echo "  Docker options:     $(DOCKER_OPTS)"
+	@printf "  Docker repo/image:  $(DOCKER_REPO)/$(IMAGE_NAME)\n"
+	@printf "  Docker options:     $(DOCKER_OPTS)\n"
 endif
-	@echo "  Make options:       $(MAKE_OPTS)"
-	@echo "  Current config:     $(CONFIG_NAME)"
+	@printf "  Make options:       $(MAKE_OPTS)\n"
+	@printf "  Current config:     $(CONFIG_NAME)\n"
 
 status:
-	@echo "$(OK_COLOR)=== Environment Status ===$(NO_COLOR)"
-	@echo ""
-	@echo "$(WARN_COLOR)Dependencies:$(NO_COLOR)"
-	@command -v docker >/dev/null 2>&1 && echo "  $(CHECK_OK) Docker" || echo "  $(CHECK_FAIL) Docker"
-	@command -v make >/dev/null 2>&1 && echo "  $(CHECK_OK) Make" || echo "  $(CHECK_FAIL) Make"
-	@command -v git >/dev/null 2>&1 && echo "  $(CHECK_OK) Git" || echo "  $(CHECK_FAIL) Git"
-	@echo ""
-	@echo "$(WARN_COLOR)Docker Image:$(NO_COLOR)"
+	@printf "$(OK_COLOR)=== Environment Status ===$(NO_COLOR)\n"
+	@printf "\n"
+	@printf "$(WARN_COLOR)Dependencies:$(NO_COLOR)\n"
+	@command -v docker >/dev/null 2>&1 && printf "  $(CHECK_OK) Docker\n" || printf "  $(CHECK_FAIL) Docker\n"
+	@command -v make >/dev/null 2>&1 && printf "  $(CHECK_OK) Make\n" || printf "  $(CHECK_FAIL) Make\n"
+	@command -v git >/dev/null 2>&1 && printf "  $(CHECK_OK) Git\n" || printf "  $(CHECK_FAIL) Git\n"
+	@printf "\n"
+	@printf "$(WARN_COLOR)Docker Image:$(NO_COLOR)\n"
 	@if docker images | grep -q "$(DOCKER_REPO)/$(IMAGE_NAME)"; then \
-		echo "  $(CHECK_OK) Build image available"; \
-		echo ""; \
+		printf "  $(CHECK_OK) Build image available\n"; \
+		printf "\n"; \
 		docker images $(DOCKER_REPO)/$(IMAGE_NAME) --format "table {{.Repository}}\t{{.Tag}}\t{{.Size}}\t{{.CreatedAt}}" | sed 's/^/    /'; \
 	else \
-		echo "  $(CHECK_FAIL) Build image not found"; \
-		echo "    Run 'make build-docker-image' to create the image"; \
+		printf "  $(CHECK_FAIL) Build image not found\n"; \
+		printf "    Run 'make build-docker-image' to create the image\n"; \
 	fi
 
 .check-docker-permission:
 	@if ! docker info >/dev/null 2>&1; then \
-		echo "$(WARN_COLOR)Cannot access Docker daemon$(NO_COLOR)"; \
-		echo "Try adding your user to the docker group:"; \
-		echo "  sudo usermod -aG docker \$$USER"; \
-		echo "  newgrp docker"; \
+		printf "$(WARN_COLOR)Cannot access Docker daemon$(NO_COLOR)\n"; \
+		printf "Try adding your user to the docker group:\n"; \
+		printf "  sudo usermod -aG docker \$$USER\n"; \
+		printf "  newgrp docker\n"; \
 		exit 1; \
 	fi
 	@touch .check-docker-permission
@@ -275,14 +275,14 @@ $(PROJECT_DIR)/.passwd $(PROJECT_DIR)/.group:
 	   [ ! -f $(PROJECT_DIR)/.group ] || \
 	   [ "$$current_user" != "$$(grep "^$(shell whoami):" $(PROJECT_DIR)/.passwd 2>/dev/null)" ] || \
 	   [ "$$current_group" != "$$(grep "^$(shell id -gn):" $(PROJECT_DIR)/.group 2>/dev/null)" ]; then \
-		echo "Updating .passwd .group files..."; \
+		printf "Updating .passwd .group files...\n"; \
 		cp /etc/passwd $(PROJECT_DIR)/.passwd.tmp; \
 		cp /etc/group $(PROJECT_DIR)/.group.tmp; \
 		if ! grep -q "^$(shell whoami):" $(PROJECT_DIR)/.passwd.tmp; then \
-			echo "$$current_user" >> $(PROJECT_DIR)/.passwd.tmp; \
+			printf "$$current_user\n" >> $(PROJECT_DIR)/.passwd.tmp; \
 		fi; \
 		if ! grep -q "^$(shell id -gn):" $(PROJECT_DIR)/.group.tmp; then \
-			echo "$$current_group" >> $(PROJECT_DIR)/.group.tmp; \
+			printf "$$current_group\n" >> $(PROJECT_DIR)/.group.tmp; \
 		fi; \
 		mv $(PROJECT_DIR)/.passwd.tmp $(PROJECT_DIR)/.passwd; \
 		mv $(PROJECT_DIR)/.group.tmp $(PROJECT_DIR)/.group; \
@@ -290,7 +290,7 @@ $(PROJECT_DIR)/.passwd $(PROJECT_DIR)/.group:
 
 .bianbu-docker-image-available: .check-docker-permission .check-docker $(PROJECT_DIR)/.passwd $(PROJECT_DIR)/.group
 	@$(DOCKER) pull $(DOCKER_REPO)/$(IMAGE_NAME) 2>/dev/null || \
-	(echo "Image not found in registry, building locally..." && \
+	(printf "Image not found in registry, building locally...\n" && \
 	 $(DOCKER) build scripts -t $(DOCKER_REPO)/$(IMAGE_NAME))
 	@touch .bianbu-docker-image-available
 
@@ -334,18 +334,18 @@ output_dir := $(shell dirname $(MAKEFILE_PATH))
 		:; \
 	elif [ "$@" = "distclean" ]; then \
 		if [ "$(OUTPUT_DIR)/$(CONFIG_NAME)" = "$(PROJECT_DIR)/output/$(CONFIG_NAME)" ]; then \
-			echo "rm -rf $(OUTPUT_DIR)/$(CONFIG_NAME)"; \
+			printf "rm -rf $(OUTPUT_DIR)/$(CONFIG_NAME)\n"; \
 			rm -rf $(OUTPUT_DIR)/$(CONFIG_NAME); \
 		fi; \
-		echo "rm -rf $(DL_DIR)"; \
+		printf "rm -rf $(DL_DIR)\n"; \
 		rm -rf $(DL_DIR); \
 	else \
 		if [ ! -d "$(output_dir)" ]; then \
-			echo "$(ERROR_COLOR)Error: env.mk exists but output directory '$(output_dir)' does not exist.$(NO_COLOR)"; \
-			echo "$(WARN_COLOR)Please run 'make envconfig' to reconfigure the environment.$(NO_COLOR)"; \
+			printf "$(ERROR_COLOR)Error: env.mk exists but output directory '$(output_dir)' does not exist.$(NO_COLOR)\n"; \
+			printf "$(WARN_COLOR)Please run 'make envconfig' to reconfigure the environment.$(NO_COLOR)\n"; \
 			exit 1; \
 		fi; \
-		echo "$(OK_COLOR)Passing target '$@' to $(output_dir)$(NO_COLOR)"; \
+		printf "$(OK_COLOR)Passing target '$@' to $(output_dir)$(NO_COLOR)\n"; \
 		$(call MAKE_IN_OUTPUT_DIR_WITH_TARGET,$(CONFIG_NAME),$@ $(MAKEOVERRIDES)); \
 	fi;
 else # NEW TARGETS
@@ -374,40 +374,41 @@ else # NEW TARGETS
 	@$(MAKE_BUILDROOT) linux-menuconfig
 
 %-cleanbuild: %-clean %-build
-	@echo
+	@printf "\n"
 
 %-pkg:
 	$(if $(PKG),,$(error "PKG not specified!"))
 	@$(MAKE) $*-build CMD=$(PKG)
 
 %-build-cmd:
-	@echo $(MAKE_BUILDROOT)
+	@printf $(MAKE_BUILDROOT)
 
 %-cleanbuild: %-clean %-build
-	@echo
+	@printf "\n"
 
 help:
-	@echo "$(OK_COLOR)Bianbu Linux Build System - Help$(NO_COLOR)"
-	@echo ""
-	@echo "$(WARN_COLOR)Available solutions:$(NO_COLOR)"
-	@echo "  $(OK_COLOR)$(TARGETS)$(NO_COLOR)"
-	@echo ""
-	@echo "$(WARN_COLOR)Development Commands:$(NO_COLOR)"
-	@echo "  $(OK_COLOR)make vars$(NO_COLOR)                          # Show project information"
-	@echo "  $(OK_COLOR)make <solution>-supported$(NO_COLOR)          # Check if solution is supported"
-	@echo "  $(OK_COLOR)make <solution>-config$(NO_COLOR)             # Apply solution defconfig"
-	@echo "  $(OK_COLOR)make <solution>-menuconfig$(NO_COLOR)         # Configure buildroot for solution"
-	@echo "  $(OK_COLOR)make <solution>-linux-menuconfig$(NO_COLOR)   # Configure Linux kernel for solution"
-	@echo "  $(OK_COLOR)make <solution>-uboot-menuconfig$(NO_COLOR)   # Configure U-Boot for solution"
-	@echo "  $(OK_COLOR)make <solution>-busybox-menuconfig$(NO_COLOR) # Configure BusyBox for solution"
-	@echo "  $(OK_COLOR)make <solution>-build$(NO_COLOR)              # Build specified solution"
-	@echo "  $(OK_COLOR)make <solution>-pkg PKG=<package>$(NO_COLOR)  # Build specified package for solution"
-	@echo "  $(OK_COLOR)make <solution>-shell$(NO_COLOR)              # Enter build container for solution"
-	@echo "  $(OK_COLOR)make <solution>-source$(NO_COLOR)             # Download all source packages for solution"
-	@echo "  $(OK_COLOR)make <solution>-clean$(NO_COLOR)              # Clean solution build artifacts"
-	@echo "  $(OK_COLOR)make <solution>-cleanbuild$(NO_COLOR)         # Clean and rebuild solution"
-	@echo "  $(OK_COLOR)make build-docker-image$(NO_COLOR)            # Build Docker image"
-	@echo "  $(OK_COLOR)make update-docker-image$(NO_COLOR)           # Update Docker image"
-	@echo ""
-	@echo "$(OK_COLOR)Quick Start: Run 'make <solution>-build' to get started!$(NO_COLOR)"
+	@printf "$(OK_COLOR)Buildroot Build System - Help$(NO_COLOR)\n"
+	@printf "\n"
+	@printf "$(WARN_COLOR)Available solutions:$(NO_COLOR)\n"
+	@printf "  $(OK_COLOR)$(TARGETS)$(NO_COLOR)\n"
+	@printf "\n"
+	@printf "$(WARN_COLOR)Development Commands:$(NO_COLOR)\n"
+	@printf "  $(OK_COLOR)make vars$(NO_COLOR)                          # Show project information\n"
+	@printf "  $(OK_COLOR)make <solution>-supported$(NO_COLOR)          # Check if solution is supported\n"
+	@printf "  $(OK_COLOR)make <solution>-config$(NO_COLOR)             # Apply solution defconfig\n"
+	@printf "  $(OK_COLOR)make <solution>-menuconfig$(NO_COLOR)         # Configure buildroot for solution\n"
+	@printf "  $(OK_COLOR)make <solution>-linux-menuconfig$(NO_COLOR)   # Configure Linux kernel for solution\n"
+	@printf "  $(OK_COLOR)make <solution>-uboot-menuconfig$(NO_COLOR)   # Configure U-Boot for solution\n"
+	@printf "  $(OK_COLOR)make <solution>-busybox-menuconfig$(NO_COLOR) # Configure BusyBox for solution\n"
+	@printf "  $(OK_COLOR)make <solution>-build$(NO_COLOR)              # Build specified solution\n"
+	@printf "  $(OK_COLOR)make <solution>-pkg PKG=<package>$(NO_COLOR)  # Build specified package for solution\n"
+	@printf "  $(OK_COLOR)make <solution>-shell$(NO_COLOR)              # Enter build container for solution\n"
+	@printf "  $(OK_COLOR)make <solution>-source$(NO_COLOR)             # Download all source packages for solution\n"
+	@printf "  $(OK_COLOR)make <solution>-clean$(NO_COLOR)              # Clean solution build artifacts\n"
+	@printf "  $(OK_COLOR)make <solution>-cleanbuild$(NO_COLOR)         # Clean and rebuild solution\n"
+	@printf "  $(OK_COLOR)make build-docker-image$(NO_COLOR)            # Build Docker image\n"
+	@printf "  $(OK_COLOR)make update-docker-image$(NO_COLOR)           # Update Docker image\n"
+	@printf "\n"
+	@printf "$(OK_COLOR)Quick Start: Run 'make <solution>-build' to get started, e.g.:$(NO_COLOR)\n"
+	@printf "  make k3-build\n"
 endif # NEW TARGETS
