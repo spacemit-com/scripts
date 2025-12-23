@@ -103,8 +103,8 @@ else # DOCKER_BUILD
 		DOCKER_OPTS += -i
 	endif
 
-	DOCKER_REPO    ?= harbor.spacemit.com/bianbu-linux
-	IMAGE_NAME     ?= bianbu-linux-builder:latest
+	DOCKER_REPO    ?= harbor.spacemit.com/bianbu
+	IMAGE_NAME     ?= k3-bsp-builder:latest
 
 define RUN_DOCKER
 	$(DOCKER) run -t --init --rm --security-opt seccomp=unconfined \
