@@ -70,6 +70,7 @@ RUN apt-get update && \
         python3-ijson \
         w3m \
         graphviz \
+        scons \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -97,6 +98,25 @@ ENV TZ Asia/Shanghai
 RUN ln -fs /usr/share/zoneinfo/${TZ} /etc/localtime \
     && echo ${TZ} > /etc/timezone \
     && dpkg-reconfigure --frontend=noninteractive tzdata
+
+# Add riscv64 architecture for cross-building Linux deb packages
+RUN cat >/etc/apt/sources.list.d/ubuntu.sources <<EOF
+Types: deb deb-src
+URIs: http://mirrors.ustc.edu.cn/ubuntu/
+Suites: noble noble-updates noble-backports
+Components: main universe restricted multiverse
+Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
+Architectures: amd64
+
+Types: deb deb-src
+URIs: http://mirrors.ustc.edu.cn/ubuntu-ports
+Suites: noble noble-updates noble-backports
+Components: main universe restricted multiverse
+Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
+Architectures: riscv64
+EOF
+RUN dpkg --add-architecture riscv64 && apt-get update && apt-get install -y libssl-dev:riscv64
+RUN passwd --delete root
 
 # Create build directory
 RUN mkdir -p /build
